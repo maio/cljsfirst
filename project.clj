@@ -5,7 +5,8 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :source-paths ["src/clj"]
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [org.clojure/clojurescript "0.0-1913"]]
+                 [org.clojure/clojurescript "0.0-1913"]
+                 [org.clojure/core.async "0.1.242.0-44b1e3-alpha"]]
   :plugins [[lein-cljsbuild "0.3.4"]]
   :cljsbuild {:builds
               [{;; CLJS source code path
