@@ -9,8 +9,14 @@
 </head>
 <body>
     <!-- pointing to cljsbuild generated js file -->
-    <button id="flickr-fetch">Flickr!</button> <span id="counter">-</span>
-    <script src="js/first.js"></script>
+    <button id="flickr-fetch">Flickr!</button>
+    Uptime: <span id="counter">-</span>s
+    FPS: <span id="current-fps">-</span>
     <div id="flickr"></div>
+
+    <div id="ship" style="position: absolute; top: 100px; left: 100px;
+         width: 10px; height: 10px; background: red;"></div>
+
+    <script src="js/first.js"></script>
 </body>
 </html>
