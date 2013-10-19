@@ -34,19 +34,24 @@
 
 (defn log [msg] (.log js/console msg))
 
-(def data (atom {:flickr-photos []}))
+(def data (atom {:flickr-photos []
+                 :counter 0}))
 
 (defn on-path-update [path f]
   (fn [_ _ old-state new-state]
     (when (not (= (get-in old-state path) (get-in new-state path)))
       (f old-state new-state))))
 
-(add-watch data :render
-           (on-path-update [:flickr-photos]
-                           (fn [_ new-state]
-                             (set-html! (by-id "flickr") "")
-                             (doseq [src (:flickr-photos new-state)]
-                               (append! (by-id "flickr") (str "<img src='" src "' height='150' />"))))))
+(defn render-flickr-photos [_ {photos :flickr-photos}]
+  (set-html! (by-id "flickr") "")
+  (doseq [src photos]
+    (append! (by-id "flickr") (str "<img src='" src "' height='150' />"))))
+
+(defn render-counter [_ {counter :counter}]
+  (set-html! (by-id "counter") counter))
+
+(add-watch data :flickr-photos (on-path-update [:flickr-photos] render-flickr-photos))
+(add-watch data :counter (on-path-update [:counter] render-counter))
 
 (let [flickr-fetch (event-chan (by-id "flickr-fetch") "click")]
   (go
@@ -55,15 +60,12 @@
       (let [photos (<! (jsonp-chan "http://api.flickr.com/services/feeds/photos_public.gne?format=json"))]
         (swap! data assoc :flickr-photos (map #(-> % (aget "media") (aget "m")) (aget photos "items")))))))
 
-(let [src (chan)]
+(let [c (chan)]
   (go
     (while true
-      (>! src "PING")
-      (<! (timeout 2800))))
+      (>! c "inc")
+      (<! (timeout 1000))))
   (go
     (while true
-      (>! src "ping")
-      (<! (timeout 3000))))
-  (go
-    (while true
-      (log (<! src)))))
+      (<! c)
+      (swap! data update-in [:counter] inc))))
