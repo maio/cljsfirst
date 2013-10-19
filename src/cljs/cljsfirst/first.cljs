@@ -32,15 +32,28 @@
 
 ;; --
 
-(defn log [msg]
-  (.log js/console msg))
+(defn log [msg] (.log js/console msg))
+
+(def data (atom {:flickr-photos []}))
+
+(defn on-path-update [path f]
+  (fn [_ _ old-state new-state]
+    (when (not (= (get-in old-state path) (get-in new-state path)))
+      (f old-state new-state))))
+
+(add-watch data :render
+           (on-path-update [:flickr-photos]
+                           (fn [_ new-state]
+                             (set-html! (by-id "flickr") "")
+                             (doseq [src (:flickr-photos new-state)]
+                               (append! (by-id "flickr") (str "<img src='" src "' height='150' />"))))))
 
 (let [flickr-fetch (event-chan (by-id "flickr-fetch") "click")]
   (go
-    (log (<! (:chan flickr-fetch)))
-    (let [photos (<! (jsonp-chan "http://api.flickr.com/services/feeds/photos_public.gne?format=json"))]
-      (doseq [desc (map #(aget % "description") (aget photos "items"))]
-        (append! (by-id "flickr") desc)))))
+    (while true
+      (<! (:chan flickr-fetch))
+      (let [photos (<! (jsonp-chan "http://api.flickr.com/services/feeds/photos_public.gne?format=json"))]
+        (swap! data assoc :flickr-photos (map #(-> % (aget "media") (aget "m")) (aget photos "items")))))))
 
 (let [src (chan)]
   (go
